@@ -61,7 +61,7 @@ test_that("Factor/PCA analysis for diamonds", {
 context("Cluster analysis")
 
 test_that("Hierarchical cluster analysis", {
-	result <- hier_clus("shopping", vars = "v1:v6")
+	result <- hclus("shopping", vars = "v1:v6")
 	# str(result)
 	res1 <- result$hc_out$height
 	# dput(result$hc_out$height)
@@ -73,8 +73,8 @@ test_that("Hierarchical cluster analysis", {
   expect_equal(res1,res2)
 })
 
-test_that("Kmeans cluster analysis", {
-	result <- kmeans_clus("shopping", vars = "v1:v6")
+test_that("K-clustering", {
+	result <- kclus("shopping", vars = "v1:v6")
 	# str(result)
 	res1 <- result$clus_means
 	# dput(result$clus_means)
@@ -90,8 +90,7 @@ context("Conjoint analysis")
 test_that("Conjoint on mp3 data", {
   result <- conjoint("mp3", rvar = "Rating", evar = "Memory:Shape")
 	# str(result)
-	res1 <- result$the_table
-	# dput(result$the_table)
+	res1 <- result$model_list[[1]]$tab
 	res2 <- structure(list(PW = structure(list(Attributes = c("Memory", "Memory",
 "Memory", "Radio", "Radio", "Size", "Size", "Size", "Price",
 "Price", "Price", "Shape", "Shape", "Shape", "Base utility"),

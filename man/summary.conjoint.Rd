@@ -4,12 +4,17 @@
 \alias{summary.conjoint}
 \title{Summary method for the conjoint function}
 \usage{
-\method{summary}{conjoint}(object, mc_diag = FALSE, dec = 3, ...)
+\method{summary}{conjoint}(object, show = "", mc_diag = FALSE,
+  additional = FALSE, dec = 3, ...)
 }
 \arguments{
 \item{object}{Return value from \code{\link{conjoint}}}
 
+\item{show}{Level in by variable to analyse (e.g., a specific respondent)}
+
 \item{mc_diag}{Shows multicollinearity diagnostics.}
+
+\item{additional}{Show additional regression results}
 
 \item{dec}{Number of decimals to show}
 
@@ -32,4 +37,3 @@ mp3 \%>\% conjoint(rvar = "Rating", evar = "Memory:Shape") \%>\% summary(., mc_d
 
 \code{\link{plot.conjoint}} to plot results
 }
-

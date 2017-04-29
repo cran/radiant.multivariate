@@ -55,7 +55,7 @@ pmap <- function(dataset, brand, attr,
 
 	rm(f_data, m, cscm)
 
-	if (!is_string(dataset)) dataset <- "-----"
+	if (!is_string(dataset)) dataset <- deparse(substitute(dataset)) %>% set_attr("df", TRUE)
 
 	as.list(environment()) %>% add_class(c("pmap","full_factor"))
 }
@@ -201,7 +201,10 @@ plot.pmap <- function(x,
 
 			plot(c(-lim, lim),type = "n",xlab = "", ylab = "", axes = FALSE, asp = 1,
 			     yaxt = "n", xaxt = "n", ylim = c(-lim, lim), xlim = c(-lim,lim))
-			title(paste("Dimension", i, "vs Dimension", j), cex.main = fontsz)
+
+			if (object$nr_dim > 2)
+				title(paste("Dimension", i, "vs Dimension", j), cex.main = fontsz)
+			
 			abline(v=0, h=0)
 
 			object$brand

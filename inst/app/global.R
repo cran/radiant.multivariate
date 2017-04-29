@@ -8,6 +8,11 @@ ifelse (grepl("radiant.multivariate", getwd()) && file.exists("../../inst") , ".
 ## setting path for figures in help files
 addResourcePath("figures_multivariate", "tools/help/figures/")
 
+## setting path for www resources 
+addResourcePath("www_multivariate", file.path(getOption("radiant.path.multivariate"), "app/www/"))
+
+if (is.null(getOption("radiant.path.model"))) options(radiant.path.model = system.file(package = "radiant.model"))
+
 ## loading urls and ui
 source("init.R", encoding = getOption("radiant.encoding"), local = TRUE)
 options(radiant.url.patterns = make_url_patterns())

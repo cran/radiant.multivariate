@@ -34,7 +34,7 @@ mds <- function(dataset, id1, id2, dis,
 
 	nr_dim <- as.numeric(nr_dim)
 	dat <- getdata(dataset, c(id1, id2, dis), filt = data_filter)
-	if (!is_string(dataset)) dataset <- "-----"
+	if (!is_string(dataset)) dataset <- deparse(substitute(dataset)) %>% set_attr("df", TRUE)
 
 	d <- dat[,dis]
 	id1_dat <- dat[ ,id1] %>% as.character
@@ -67,7 +67,7 @@ mds <- function(dataset, id1, id2, dis,
 	# res <- suppressWarnings(metaMDS(mds_dis_mat, k = nr_dim, trymax = 500))
 	# if (res$converged == FALSE) return("The MDS algorithm did not converge. Please try again.")
 
-	set.seed(seed)
+  seed %>% gsub("[^0-9]","",.) %>% { if (!is_empty(.)) set.seed(seed) }
 	res <- MASS::isoMDS(mds_dis_mat, k = nr_dim, trace = FALSE)
 	res$stress <- res$stress / 100
 
@@ -177,9 +177,12 @@ plot.mds <- function(x,
 	## plot maps
 	for (i in 1:(object$nr_dim - 1)) {
 		for (j in (i + 1):object$nr_dim) {
-			plot(c(-lim, lim), type = "n", xlab= "", ylab = "", axes = FALSE, asp = 1,
+			plot(c(-lim, lim), type = "n", xlab = "", ylab = "", axes = FALSE, asp = 1,
 			     yaxt = "n", xaxt = "n", ylim = c(-lim, lim), xlim = c(-lim, lim))
-			title(paste("Dimension", i, "vs Dimension", j), cex.main = fontsz)
+
+			if (object$nr_dim > 2)
+				title(main = paste("Dimension", i, "vs Dimension", j), cex.main = fontsz)
+			
 			points(object$res$points[ ,i], object$res$points[ ,j], pch = 16, cex = .6)
 			wordcloud::textplot(object$res$points[ ,i], object$res$points[ ,j] +
 			                    (.04 * lim), object$lab, col = rainbow(object$nrLev, start = .6, end = .1),

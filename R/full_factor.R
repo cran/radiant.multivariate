@@ -19,7 +19,8 @@
 #' @seealso \code{\link{summary.full_factor}} to summarize results
 #' @seealso \code{\link{plot.full_factor}} to plot results
 #'
-#' @importFrom psych principal
+#' @importFrom psych principal fa
+#' @importFrom GPArotation quartimax oblimin simplimax
 #'
 #' @export
 full_factor <- function(dataset, vars,
@@ -29,7 +30,7 @@ full_factor <- function(dataset, vars,
                         data_filter = "") {
 
 	dat <- getdata(dataset, vars, filt = data_filter)
-	if (!is_string(dataset)) dataset <- "-----"
+	if (!is_string(dataset)) dataset <- deparse(substitute(dataset)) %>% set_attr("df", TRUE)
 
 	nrObs <- nrow(dat)
 	if (nrObs <= ncol(dat)) {
@@ -47,7 +48,9 @@ full_factor <- function(dataset, vars,
 		fres <- psych::principal(dat, nfactors = nrFac, rotate = rotation, scores = TRUE,
 		               oblique.scores = FALSE)
 	} else {
-		fres <- factanal(dat, nrFac, rotation = rotation, scores = "regression")
+		fres <- psych::fa(dat, nfactors = nrFac, rotate = rotation, scores = TRUE,
+		               oblique.scores = FALSE, fm = "ml")
+		# fres <- factanal(dat, nrFac, rotation = rotation, scores = "regression")
 	}
 
 	## convert loadings object to data.frame
@@ -115,7 +118,6 @@ summary.full_factor <- function(object,
 	colSums(object$floadings^2) %>%
 		rbind(., . / nrow(object$floadings)) %>%
 		rbind(., cumsum(.[2,])) %>%
-		# round(2) %>%
 		set_rownames(c("Eigenvalues","Variance %","Cumulative %")) %>%
 		as.data.frame %>%
 		formatdf(dec = dec) %>%
@@ -146,6 +148,7 @@ summary.full_factor <- function(object,
 #'
 #' @param x Return value from \code{\link{full_factor}}
 #' @param shiny Did the function call originate inside a shiny app
+#' @param custom Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This opion can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{http://docs.ggplot2.org/} for options.
 #' @param ... further arguments passed to or from other methods
 #'
 #' @examples
@@ -158,9 +161,7 @@ summary.full_factor <- function(object,
 #' @seealso \code{\link{plot.full_factor}} to plot results
 #'
 #' @export
-plot.full_factor <- function(x,
-                             shiny = FALSE,
-                             ...) {
+plot.full_factor <- function(x, shiny = FALSE, custom = FALSE, ...) {
 
 	object <- x; rm(x)
 
@@ -176,14 +177,14 @@ plot.full_factor <- function(x,
 	df <- object$floadings
 	rnames <- rownames(df)
 	cnames <- colnames(df)
-	plots <- list()
+	plot_list <- list()
 	pnr <- 1
 	ab_df <- data.frame(a = c(0,0), b = c(1, 0))
 	for (i in 1:(length(cnames) - 1)) {
 		for (j in (i + 1):length(cnames)) {
 			i_name <- cnames[i]; j_name <- cnames[j]
 		  df2 <- cbind(df[, c(i_name,j_name)],rnames)
-  		plots[[pnr]] <- ggplot(df2, aes_string(x = i_name, y = j_name, color = 'rnames', label = 'rnames')) +
+  		plot_list[[pnr]] <- ggplot(df2, aes_string(x = i_name, y = j_name, color = 'rnames', label = 'rnames')) +
   										  geom_text() + theme(legend.position = "none") +
   										  xlim(-1,1) + ylim(-1,1) + geom_vline(xintercept = 0) +
   										  geom_hline(yintercept = 0)
@@ -191,7 +192,10 @@ plot.full_factor <- function(x,
   	}
 	}
 
-	sshhr( do.call(gridExtra::arrangeGrob, c(plots, list(ncol = min(length(plots),2)))) ) %>%
+  if (custom)
+    if (length(plot_list) == 1) return(plot_list[[1]]) else return(plot_list)
+
+	sshhr(gridExtra::grid.arrange(grobs = plot_list, ncol = min(length(plot_list),2))) %>%
 	 	{if (shiny) . else print(.)}
 }
 
@@ -218,7 +222,7 @@ store.full_factor <- function(object, ..., name = "") {
 	fscores <- as.data.frame(object$fres$scores)
   if (is_empty(name)) name <- "factor"
 
-  dat <- {if (object$dataset == "-----") object$dat else object$dataset}
+  dat <- if (length(attr(object$dataset, "df") > 0)) object$dat else object$dataset
 	indr <- indexr(dat, object$vars, object$data_filter)
 	fs <- data.frame(matrix(NA, nrow = indr$nr, ncol = ncol(fscores)))
 	fs[indr$ind, ] <- fscores
