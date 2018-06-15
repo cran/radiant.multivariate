@@ -6,30 +6,20 @@
 #' @name radiant.multivariate-deprecated
 #' @param ... Parameters to be passed to the updated functions
 #' @docType package
-#' @export  save_factors save_membership kmeans_clus hier_clus
-#' @aliases save_factors save_membership kmeans_clus hier_clus
+#' @export  pmap
+#' @aliases pmap
 #' @section Details:
-#' \tabular{rl}{
-#'   \code{save_factors} is now a synonym for \code{\link{store.full_factor}}\cr
-#'   \code{save_membership} is now a synonym for \code{\link{store.kclus}}\cr
-#'   \code{kmeans_clus} is now a synonym for \code{\link{kclus}}\cr
-#'   \code{hier_clus} is now a synonym for \code{\link{hclus}}\cr
+#' \itemize{
+#'   \item Replace \code{pmap} by \code{\link{prmap}}
 #' }
 #'
-save_factors <- function(...) {
-  .Deprecated("store.full_factor", package = "radiant.multivariate")
-  store.full_factor(...)
-}
-save_membership <- function(...) {
-  .Deprecated("store.kmeans_clus", package = "radiant.multivariate")
-  store.kclus(...)
-}
-kmeans_clus <- function(...) {
-  .Deprecated("kclus", package = "radiant.multivariate")
-  kclus(...)
-}
-hier_clus <- function(...) {
-  .Deprecated("hclus", package = "radiant.multivariate")
-  hclus(...)
+pmap <- function(...) {
+  # if ("package:purrr" %in% search()) {
+  #   message("If you want to create an attribute-based perceptual map use prmap")
+  #   purrr::pmap(...)
+  # } else {
+    .Deprecated("prmap", package = "radiant.multivariate")
+    prmap(...)
+  # }
 }
 NULL

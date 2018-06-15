@@ -8,7 +8,7 @@ full_factor(dataset, vars, method = "PCA", nr_fact = 1,
   rotation = "varimax", data_filter = "")
 }
 \arguments{
-\item{dataset}{Dataset name (string). This can be a dataframe in the global environment or an element in an r_data list from Radiant}
+\item{dataset}{Dataset}
 
 \item{vars}{Variables to include in the analysis}
 
@@ -30,9 +30,7 @@ Factor analysis (PCA)
 See \url{https://radiant-rstats.github.io/docs/multivariate/full_factor.html} for an example in Radiant
 }
 \examples{
-result <- full_factor("diamonds",c("price","carat","table","x","y"))
-result <- full_factor("diamonds",c("price","carat","table","x","y"), method = "maxlik")
-result <- diamonds \%>\% full_factor(c("price","carat","table","x","y"), method = "maxlik")
+full_factor(shopping, "v1:v6") \%>\% str()
 
 }
 \seealso{

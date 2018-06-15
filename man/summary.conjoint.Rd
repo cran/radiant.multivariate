@@ -10,7 +10,7 @@
 \arguments{
 \item{object}{Return value from \code{\link{conjoint}}}
 
-\item{show}{Level in by variable to analyse (e.g., a specific respondent)}
+\item{show}{Level in by variable to analyze (e.g., a specific respondent)}
 
 \item{mc_diag}{Shows multicollinearity diagnostics.}
 
@@ -27,9 +27,8 @@ Summary method for the conjoint function
 See \url{https://radiant-rstats.github.io/docs/multivariate/conjoint.html} for an example in Radiant
 }
 \examples{
-result <- conjoint("mp3", rvar = "Rating", evar = "Memory:Shape")
+result <- conjoint(mp3, rvar = "Rating", evar = "Memory:Shape")
 summary(result, mc_diag = TRUE)
-mp3 \%>\% conjoint(rvar = "Rating", evar = "Memory:Shape") \%>\% summary(., mc_diag = TRUE)
 
 }
 \seealso{

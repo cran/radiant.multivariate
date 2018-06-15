@@ -4,7 +4,7 @@
 \alias{clean_loadings}
 \title{Sort and clean loadings}
 \usage{
-clean_loadings(floadings, cutoff = 0, fsort = FALSE, dec = 8)
+clean_loadings(floadings, cutoff = 0, fsort = FALSE, dec = 8, repl = NA)
 }
 \arguments{
 \item{floadings}{Data frame with loadings}
@@ -14,6 +14,8 @@ clean_loadings(floadings, cutoff = 0, fsort = FALSE, dec = 8)
 \item{fsort}{Sort factor loadings}
 
 \item{dec}{Number of decimals to show}
+
+\item{repl}{Replace loadings below the cutoff by NA (or "")}
 }
 \description{
 Sort and clean loadings
@@ -22,7 +24,7 @@ Sort and clean loadings
 See \url{https://radiant-rstats.github.io/docs/multivariate/full_factor.html} for an example in Radiant
 }
 \examples{
-result <- full_factor("diamonds",c("price","carat","table","x","y"))
-clean_loadings(result$floadings, TRUE, .5, 2)
+result <- full_factor(shopping, "v1:v6", nr_fact = 2)
+clean_loadings(result$floadings, fsort = TRUE, cutoff = .5, dec = 2)
 
 }

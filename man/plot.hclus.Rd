@@ -12,11 +12,11 @@
 
 \item{plots}{Plots to return. "change" shows the percentage change in within-cluster heterogeneity as respondents are grouped into different number of clusters, "dendro" shows the dendrogram, "scree" shows a scree plot of within-cluster heterogeneity}
 
-\item{cutoff}{For large datasets plots can take time to render and become hard to interpret. By selection a cutoff point (e.g., 0.05 percent) the initial steps in hierachical cluster analysis are removed from the plot}
+\item{cutoff}{For large datasets plots can take time to render and become hard to interpret. By selection a cutoff point (e.g., 0.05 percent) the initial steps in hierarchical cluster analysis are removed from the plot}
 
 \item{shiny}{Did the function call originate inside a shiny app}
 
-\item{custom}{Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This opion can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{http://docs.ggplot2.org/} for options.}
+\item{custom}{Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This option can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{http://docs.ggplot2.org} for options.}
 
 \item{...}{further arguments passed to or from other methods}
 }
@@ -27,10 +27,9 @@ Plot method for the hclus function
 See \url{https://radiant-rstats.github.io/docs/multivariate/hclus.html} for an example in Radiant
 }
 \examples{
-result <- hclus("shopping", vars = c("v1:v6"))
+result <- hclus(shopping, vars = c("v1:v6"))
 plot(result, plots = c("change", "scree"), cutoff = .05)
 plot(result, plots = "dendro", cutoff = 0)
-shopping \%>\% hclus(vars = c("v1:v6")) \%>\% plot
 
 }
 \seealso{

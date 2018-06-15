@@ -12,13 +12,13 @@
 
 \item{plots}{Show either the part-worth ("pw") or importance-weights ("iw") plot}
 
-\item{show}{Level in by variable to analyse (e.g., a specific respondent)}
+\item{show}{Level in by variable to analyze (e.g., a specific respondent)}
 
 \item{scale_plot}{Scale the axes of the part-worth plots to the same range}
 
 \item{shiny}{Did the function call originate inside a shiny app}
 
-\item{custom}{Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This opion can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{http://docs.ggplot2.org/} for options.}
+\item{custom}{Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This option can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{http://docs.ggplot2.org} for options.}
 
 \item{...}{further arguments passed to or from other methods}
 }
@@ -29,7 +29,7 @@ Plot method for the conjoint function
 See \url{https://radiant-rstats.github.io/docs/multivariate/conjoint.html} for an example in Radiant
 }
 \examples{
-result <- conjoint(dataset = "mp3", rvar = "Rating", evar = "Memory:Shape")
+result <- conjoint(mp3, rvar = "Rating", evar = "Memory:Shape")
 plot(result, scale_plot = TRUE)
 plot(result, plots = "iw")
 

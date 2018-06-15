@@ -3,14 +3,11 @@
 \docType{package}
 \name{radiant.multivariate-deprecated}
 \alias{radiant.multivariate-deprecated}
-\alias{save_factors}
-\alias{save_membership}
-\alias{kmeans_clus}
-\alias{hier_clus}
+\alias{pmap}
 \alias{radiant.multivariate-deprecated-package}
 \title{Deprecated function(s) in the radiant.multivariate package}
 \usage{
-save_factors(...)
+pmap(...)
 }
 \arguments{
 \item{...}{Parameters to be passed to the updated functions}
@@ -21,11 +18,8 @@ radiant. They will eventually be  removed.
 }
 \section{Details}{
 
-\tabular{rl}{
-  \code{save_factors} is now a synonym for \code{\link{store.full_factor}}\cr
-  \code{save_membership} is now a synonym for \code{\link{store.kclus}}\cr
-  \code{kmeans_clus} is now a synonym for \code{\link{kclus}}\cr
-  \code{hier_clus} is now a synonym for \code{\link{hclus}}\cr
+\itemize{
+  \item Replace \code{pmap} by \code{\link{prmap}}
 }
 }
 

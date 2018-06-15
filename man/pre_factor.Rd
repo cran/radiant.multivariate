@@ -7,7 +7,7 @@
 pre_factor(dataset, vars, data_filter = "")
 }
 \arguments{
-\item{dataset}{Dataset name (string). This can be a dataframe in the global environment or an element in an r_data list from Radiant}
+\item{dataset}{Dataset}
 
 \item{vars}{Variables to include in the analysis}
 
@@ -23,7 +23,7 @@ Evaluate if data are appropriate for PCA / Factor analysis
 See \url{https://radiant-rstats.github.io/docs/multivariate/pre_factor.html} for an example in Radiant
 }
 \examples{
-result <- pre_factor("diamonds",c("price","carat","table"))
+pre_factor(shopping, "v1:v6") \%>\% str()
 
 }
 \seealso{

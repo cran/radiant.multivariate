@@ -8,7 +8,7 @@ conjoint(dataset, rvar, evar, int = "", by = "none", reverse = FALSE,
   data_filter = "")
 }
 \arguments{
-\item{dataset}{Dataset name (string). This can be a dataframe in the global environment or an element in an r_data list from Radiant}
+\item{dataset}{Dataset}
 
 \item{rvar}{The response variable (e.g., profile ratings)}
 
@@ -32,8 +32,7 @@ Conjoint analysis
 See \url{https://radiant-rstats.github.io/docs/multivariate/conjoint.html} for an example in Radiant
 }
 \examples{
-result <- conjoint("mp3", rvar = "Rating", evar = "Memory:Shape")
-result <- mp3 \%>\% conjoint(rvar = "Rating", evar = "Memory:Shape")
+conjoint(mp3, rvar = "Rating", evar = "Memory:Shape") \%>\% str()
 
 }
 \seealso{

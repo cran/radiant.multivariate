@@ -1,12 +1,16 @@
 # to avoid 'no visible binding for global variable' NOTE
-globalVariables(c(".","y","nr_clus","nr_fact","height","bump","n","se","ci","cent","r_environment"))
+globalVariables(c(
+  ".", "y", "nr_clus", "nr_fact", "height", "bump", "n", "se", "ci",
+  "cent", "r_environment"
+))
 
 #' radiant.multivariate
 #'
 #' @name radiant.multivariate
 #' @docType package
 #' @import radiant.data shiny ggplot2
-#' @importFrom dplyr select select_ filter mutate funs group_by group_by_ lag slice filter_ bind_rows mutate_all summarise_all
+#' @importFrom dplyr select select_at filter mutate mutate_if funs group_by group_by_at lag slice bind_rows mutate_all summarise_all rename
+#' @importFrom rlang .data
 #' @importFrom magrittr %>% %<>% %T>% set_colnames set_rownames set_names
 #' @importFrom gridExtra grid.arrange
 #' @importFrom scales percent
@@ -19,7 +23,7 @@ globalVariables(c(".","y","nr_clus","nr_fact","height","bump","n","se","ci","cen
 NULL
 
 #' Conjoint data for MP3 players
-#' @details Ratings reflect the evaluation of 18 alternative MP3 players by one respondent. Description provided in attr(mp3,"description")
+#' @details Ratings reflect the evaluation of 18 alternative MP3 players by one respondent. Description provided in attr(mp3, "description")
 #' @docType data
 #' @keywords datasets
 #' @name mp3
@@ -28,7 +32,7 @@ NULL
 NULL
 
 #' Conjoint data for Movie theaters
-#' @details Rankings reflect the evaluation of 18 alternative movie theaters by one respondent. Description provided in attr(movie,"description")
+#' @details Rankings reflect the evaluation of 18 alternative movie theaters by one respondent. Description provided in attr(movie, "description")
 #' @docType data
 #' @keywords datasets
 #' @name movie
@@ -37,7 +41,7 @@ NULL
 NULL
 
 #' Carpet cleaners
-#' @details Rankings reflect the evaluation of 18 alternative carpet cleaners by one respondent. Description provided in attr(carpet,"description")
+#' @details Rankings reflect the evaluation of 18 alternative carpet cleaners by one respondent. Description provided in attr(carpet," description")
 #' @docType data
 #' @keywords datasets
 #' @name carpet
@@ -46,7 +50,7 @@ NULL
 NULL
 
 #' Shopping attitudes
-#' @details Attitudinal data on shopping for 20 consumers. Description provided in attr(shopping,"description")
+#' @details Attitudinal data on shopping for 20 consumers. Description provided in attr(shopping, "description")
 #' @docType data
 #' @keywords datasets
 #' @name shopping
@@ -55,7 +59,7 @@ NULL
 NULL
 
 #' Toothpaste attitudes
-#' @details Attitudinal data on toothpaste for 60 consumers. Description provided in attr(toothpaste,"description")
+#' @details Attitudinal data on toothpaste for 60 consumers. Description provided in attr(toothpaste, "description")
 #' @docType data
 #' @keywords datasets
 #' @name toothpaste
@@ -64,7 +68,7 @@ NULL
 NULL
 
 #' City distances
-#' @details Distance in miles between nine cities in the USA. The dataset is used to illustrate multi-dimensional scaling (MDS). Description provided in attr(city,"description")
+#' @details Distance in miles between nine cities in the USA. The dataset is used to illustrate multi-dimensional scaling (MDS). Description provided in attr(city, "description")
 #' @docType data
 #' @keywords datasets
 #' @name city
@@ -73,7 +77,7 @@ NULL
 NULL
 
 #' City distances 2
-#' @details Distance in miles between 12 cities in the USA. The dataset is used to illustrate multi-dimensional scaling (MDS). Description provided in attr(city2,"description")
+#' @details Distance in miles between 12 cities in the USA. The dataset is used to illustrate multi-dimensional scaling (MDS). Description provided in attr(city2, "description")
 #' @docType data
 #' @keywords datasets
 #' @name city2
@@ -82,7 +86,7 @@ NULL
 NULL
 
 #' Toothpaste brands
-#' @details Perceived (dis)similarity of a set of toothpaste brands. The dataset is used to illustrate multi-dimensional scaling (MDS). Description provided in attr(tpbrands,"description")
+#' @details Perceived (dis)similarity of a set of toothpaste brands. The dataset is used to illustrate multi-dimensional scaling (MDS). Description provided in attr(tpbrands, "description")
 #' @docType data
 #' @keywords datasets
 #' @name tpbrands
@@ -91,7 +95,7 @@ NULL
 NULL
 
 #' Perceptions of computer (re)sellers
-#' @details Perceptions of computer (re)sellers. The dataset is used to illustrate perceptual maps. Description provided in attr(computer,"description")
+#' @details Perceptions of computer (re)sellers. The dataset is used to illustrate perceptual maps. Description provided in attr(computer, "description")
 #' @docType data
 #' @keywords datasets
 #' @name computer
@@ -100,7 +104,7 @@ NULL
 NULL
 
 #' Perceptions of retailers
-#' @details Consumer evaluations for a set of retailers in the Chicago area on 7 attributes. The dataset is used to illustrate perceptual maps. Description provided in attr(retailers,"description")
+#' @details Consumer evaluations for a set of retailers in the Chicago area on 7 attributes. The dataset is used to illustrate perceptual maps. Description provided in attr(retailers, "description")
 #' @docType data
 #' @keywords datasets
 #' @name retailers
