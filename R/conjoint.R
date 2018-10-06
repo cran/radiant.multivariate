@@ -61,7 +61,7 @@ conjoint <- function(
     }
 
     model <- sshhr(lm(formula, data = cdat))
-    coeff <- tidy(model)
+    coeff <- tidy(model) %>% as.data.frame()
     tab <- the_table(coeff, cdat, evar)
 
     coeff$sig_star <- sig_stars(coeff$p.value) %>%
@@ -277,7 +277,7 @@ predict.conjoint <- function(
         silent = TRUE
       )
 
-    if (!is(pred_val, "try-error")) {
+    if (!inherits(pred_val, "try-error")) {
       if (se) {
         pred_val %<>% data.frame(stringsAsFactors = FALSE) %>% mutate(diff = .[, 3] - .[, 1])
         ci_perc <- ci_label(cl = conf_lev)
