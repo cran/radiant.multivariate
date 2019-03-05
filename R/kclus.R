@@ -52,10 +52,10 @@ kclus <- function(
     hc_cent <- c()
     km_out <- dataset %>%
       mutate(clus_var = clus_var) %>%
-      mutate_all(funs(as.vector(scale(.)))) %T>% {
+      mutate_all(~ as.vector(scale(.))) %T>% {
         hc_cent <<-
           group_by(., clus_var) %>%
-          summarise_all(funs(mean)) %>%
+          summarise_all(mean) %>%
           select(-clus_var) %>%
           as.matrix()
       } %>%
@@ -74,7 +74,7 @@ kclus <- function(
       if (!is_empty(.)) set.seed(seed)
     }
     km_out <- dataset %>%
-      mutate_all(funs(as.vector(scale(.)))) %>%
+      mutate_all(~ as.vector(scale(.))) %>%
       {
         if (fun == "median") {
           km_cent <- kmeans(., centers = nr_clus, algorithm = "MacQueen", iter.max = 500)$centers
@@ -87,16 +87,16 @@ kclus <- function(
 
   ## same calculations of SST etc. as for kmeans (verified)
   if (fun == "median") {
-    sdat <- mutate_all(dataset, funs(as.vector(scale(.))))
+    sdat <- mutate_all(dataset, ~ as.vector(scale(.)))
     km_out$withinss <-
       mutate(sdat, clus_var = km_out$cluster) %>%
       group_by(clus_var) %>%
-      summarise_all(funs(sum((. - mean(.)) ^ 2))) %>%
+      summarise_all(~ sum((. - mean(.)) ^ 2)) %>%
       select(-clus_var) %>%
       rowSums()
     km_out$tot.withinss <- sum(km_out$withinss)
     km_out$totss <-
-      summarise_all(sdat, funs(sum((. - mean(.)) ^ 2))) %>%
+      summarise_all(sdat, ~ sum((. - mean(.)) ^ 2)) %>%
       sum(.)
     km_out$betweenss <- km_out$totss - km_out$tot.withinss
     rm(sdat)
@@ -107,7 +107,7 @@ kclus <- function(
   clus_means <- dataset %>%
     mutate(clus_var = km_out$cluster) %>%
     group_by(clus_var) %>%
-    summarise_all(funs(mean(.))) %>%
+    summarise_all(mean) %>%
     select(-clus_var) %>%
     as.data.frame(stringsAsFactors = FALSE) %>%
     set_rownames(clus_names)
@@ -137,7 +137,7 @@ kclus <- function(
 summary.kclus <- function(object, dec = 2, ...) {
   cat(paste0("K-", object$fun, "s cluster analysis\n"))
   cat("Data         :", object$df_name, "\n")
-  if (object$data_filter %>% gsub("\\s", "", .) != "") {
+  if (!is_empty(object$data_filter)) {
     cat("Filter       :", gsub("\\n", "", object$data_filter), "\n")
   }
   cat("Variables    :", paste0(object$vars, collapse = ", "), "\n")
@@ -153,7 +153,7 @@ summary.kclus <- function(object, dec = 2, ...) {
   cat(paste0("Cluster means:\n"))
   cm <- object$clus_means
   cm <- cbind(data.frame(" " = paste0("Cluster ", 1:nrow(cm)), check.names = FALSE), cm)
-  print(format_df(cm, dec = dec), row.names = FALSE)
+  print(format_df(cm, mark = ",", dec = dec), row.names = FALSE)
 
   ## percentage of within cluster heterogeneity accounted for by each cluster
   cat("\nPercentage of within cluster heterogeneity accounted for by each cluster:\n")
@@ -212,7 +212,7 @@ plot.kclus <- function(
     }
   }
   if ("bar" %in% plots) {
-    ci_calc <- function(se, n, conf.lev = .95)
+    me_calc <- function(se, n, conf.lev = .95)
       se * qt(conf.lev / 2 + .5, n - 1)
 
     for (var in vars) {
@@ -220,19 +220,19 @@ plot.kclus <- function(
         select_at(x$dataset, .vars = c(var, "Cluster")) %>%
         group_by_at(.vars = "Cluster") %>%
         summarise_all(
-          funs(
-            cent = fun(.),
-            n = length(.),
-            sd,
-            se = sd / sqrt(n),
-            ci = ci_calc(se, n, .95)
+          list(
+            cent = ~ fun,
+            n = length,
+            sd = sd,
+            se = se,
+            me = ~ me_calc(se, n, .95)
           )
         )
 
       plot_list[[paste0("bar_", var)]] <-
         ggplot(dat_summary, aes_string(x = "Cluster", y = "cent", fill = "Cluster")) +
         geom_bar(stat = "identity") +
-        geom_errorbar(width = .1, aes(ymin = cent - ci, ymax = cent + ci)) +
+        geom_errorbar(width = .1, aes(ymin = cent - me, ymax = cent + me)) +
         geom_errorbar(width = .05, aes(ymin = cent - se, ymax = cent + se), color = "blue") +
         theme(legend.position = "none") +
         labs(y = paste0(var, " (", x$fun, ")"))
