@@ -6,7 +6,7 @@
 \usage{
 kclus(dataset, vars, fun = "mean", hc_init = TRUE,
   distance = "sq.euclidian", method = "ward.D", seed = 1234,
-  nr_clus = 2, data_filter = "")
+  nr_clus = 2, standardize = TRUE, data_filter = "")
 }
 \arguments{
 \item{dataset}{Dataset}
@@ -25,6 +25,8 @@ kclus(dataset, vars, fun = "mean", hc_init = TRUE,
 
 \item{nr_clus}{Number of clusters to extract}
 
+\item{standardize}{Standardize data (TRUE or FALSE)}
+
 \item{data_filter}{Expression entered in, e.g., Data > View to filter the dataset in Radiant. The expression should be a string (e.g., "price > 10000")}
 }
 \value{
@@ -38,7 +40,6 @@ See \url{https://radiant-rstats.github.io/docs/multivariate/kclus.html} for an e
 }
 \examples{
 kclus(shopping, c("v1:v6"), nr_clus = 3) \%>\% str()
-
 }
 \seealso{
 \code{\link{summary.kclus}} to summarize results
