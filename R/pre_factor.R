@@ -4,7 +4,9 @@
 #'
 #' @param dataset Dataset
 #' @param vars Variables to include in the analysis
+#' @param hcor Use polycor::hetcor to calculate the correlation matrix
 #' @param data_filter Expression entered in, e.g., Data > View to filter the dataset in Radiant. The expression should be a string (e.g., "price > 10000")
+#' @param envir Environment to extract data from
 #'
 #' @return A list with all variables defined in the function as an object of class pre_factor
 #'
@@ -15,24 +17,36 @@
 #' @seealso \code{\link{plot.pre_factor}} to plot results
 #'
 #' @importFrom psych KMO cortest.bartlett
+#' @importFrom lubridate is.Date
+#' @importFrom polycor hetcor
 #'
 #' @export
-pre_factor <- function(dataset, vars, data_filter = "") {
+pre_factor <- function(dataset, vars, hcor = FALSE, data_filter = "", envir = parent.frame()) {
 
   df_name <- if (is_string(dataset)) dataset else deparse(substitute(dataset))
-  dataset <- get_data(dataset, vars, filt = data_filter)
+  dataset <- get_data(dataset, vars, filt = data_filter, envir = envir)
   nrObs <- nrow(dataset)
 
   ## in case : is used
   if (length(vars) < ncol(dataset))
     vars <- colnames(dataset)
 
-  if (nrObs <= ncol(dataset)) {
-    return("Data should have more observations than variables.\nPlease reduce the number of variables." %>%
-      add_class("pre_factor"))
+  anyCategorical <- sapply(dataset, function(x) is.numeric(x) || is.Date(x)) == FALSE
+
+  if (hcor) {
+    dataset <- mutate_if(dataset, is.Date, as.numeric)
+    cmat <- try(sshhr(polycor::hetcor(dataset, ML = FALSE, std.err = FALSE)$correlations), silent = TRUE)
+    dataset <- mutate_all(dataset, radiant.data::as_numeric)
+    if (inherits(cmat, "try-error")) {
+      message("Calculating the heterogenous correlation matrix produced an error.\nUsing standard correlation matrix instead")
+      hcor <- "Calculation failed"
+      cmat <- cor(dataset)
+    }
+  } else {
+    dataset <- mutate_all(dataset, radiant.data::as_numeric)
+    cmat <- cor(dataset)
   }
 
-  cmat <- cor(dataset)
   btest <- psych::cortest.bartlett(cmat, nrow(dataset))
   pre_kmo <- psych::KMO(cmat)
   pre_eigen <- eigen(cmat)$values
@@ -51,7 +65,7 @@ pre_factor <- function(dataset, vars, data_filter = "") {
     pre_r2 <- err_mess
   }
 
-  rm(dataset, err_mess)
+  rm(dataset, err_mess, envir)
 
   as.list(environment()) %>% add_class("pre_factor")
 }
@@ -97,9 +111,31 @@ summary.pre_factor <- function(object, dec = 2, ...) {
   }
   cat("Variables   :", paste0(object$vars, collapse = ", "), "\n")
   cat("Observations:", format_nr(object$nrObs, dec = 0), "\n")
+  if (is.character(object$hcor)) {
+    cat(paste0("Correlation : Pearson (adjustment using polycor::hetcor failed)\n"))
+  } else if (isTRUE(object$hcor)) {
+    if (sum(object$anyCategorical) > 0) {
+      cat(paste0("Correlation : Heterogeneous correlations using polycor::hetcor\n"))
+    } else {
+      cat(paste0("Correlation : Pearson\n"))
+    }
+  } else {
+    cat("Correlation : Pearson\n")
+  }
+  if (sum(object$anyCategorical) > 0) {
+    if (isTRUE(object$hcor)) {
+      cat("** Variables of type {factor} are assumed to be ordinal **\n\n")
+    } else {
+      cat("** Variables of type {factor} included without adjustment **\n\n")
+    }
+  } else if (isTRUE(object$hcor)) {
+    cat("** No variables of type {factor} selected. No adjustment applied **\n\n")
+  } else {
+    cat("\n")
+  }
 
   btest <- object$btest
-  cat("\nBartlett test\n")
+  cat("Bartlett test\n")
   cat("Null hyp. : variables are not correlated\n")
   cat("Alt. hyp. : variables are correlated\n")
   bt <- object$btest$p.value %>% {
@@ -195,15 +231,12 @@ plot.pre_factor <- function(
       )
   }
 
-  if (custom) {
-    if (length(plot_list) == 1) {
-      return(plot_list[[1]])
+  if (length(plot_list) > 0) {
+    if (custom) {
+      if (length(plot_list) == 1) plot_list[[1]] else plot_list
     } else {
-      return(plot_list)
+      patchwork::wrap_plots(plot_list, ncol = 1) %>%
+        {if (shiny) . else print(.)}
     }
-  }
-
-  sshhr(gridExtra::grid.arrange(grobs = plot_list, ncol = 1)) %>% {
-    if (shiny) . else print(.)
   }
 }

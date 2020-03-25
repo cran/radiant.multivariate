@@ -10,6 +10,7 @@
 #' @param max_cases Maximum number of cases allowed (default is 1000). Set to avoid long-running analysis in the radiant web-interface
 #' @param standardize Standardized data (TRUE or FALSE)
 #' @param data_filter Expression entered in, e.g., Data > View to filter the dataset in Radiant. The expression should be a string (e.g., "price > 10000")
+#' @param envir Environment to extract data from
 #'
 #' @return A list of all variables used in hclus as an object of class hclus
 #'
@@ -19,24 +20,30 @@
 #' @seealso \code{\link{summary.hclus}} to summarize results
 #' @seealso \code{\link{plot.hclus}} to plot results
 #'
+#' @importFrom gower gower_dist
+#'
 #' @export
 hclus <- function(
   dataset, vars, labels = "none", distance = "sq.euclidian",
   method = "ward.D", max_cases = 5000,
-  standardize = TRUE, data_filter = ""
+  standardize = TRUE, data_filter = "",
+  envir = parent.frame()
 ) {
 
   df_name <- if (is_string(dataset)) dataset else deparse(substitute(dataset))
-  dataset <- get_data(dataset, if (labels == "none") vars else c(labels, vars), filt = data_filter)
+  dataset <- get_data(dataset, if (labels == "none") vars else c(labels, vars), filt = data_filter, envir = envir) %>%
+    as.data.frame() %>%
+    mutate_if(is.Date, as.numeric)
+  rm(envir)
   if (nrow(dataset) > max_cases) {
     return("The number of cases to cluster exceed the maximum set. Change\nthe number of cases allowed using the 'Max cases' input box." %>%
       add_class("hclus"))
   }
 
+  anyCategorical <- sapply(dataset, function(x) is.numeric(x)) == FALSE
   ## in case : is used
-  if (length(vars) < ncol(dataset)) {
-    vars <- colnames(dataset)
-  }
+  if (length(vars) < ncol(dataset)) vars <- colnames(dataset)
+  if (any(anyCategorical) && distance != "gower") distance <- "gower"
 
   if (labels != "none") {
     if (length(unique(dataset[[1]])) == nrow(dataset)) {
@@ -48,11 +55,19 @@ hclus <- function(
     dataset <- select(dataset, -1)
   }
 
-  hc_out <- dataset %>%
-    {if (standardize) scale(.) else .} %>%
-    {if (distance == "sq.euclidian") dist(., method = "euclidean") ^ 2 else dist(., method = distance)} %>%
-    hclust(d = ., method = method)
+  if (standardize) {
+    dataset <- mutate_if(dataset, is.numeric, ~ as.vector(scale(.)))
+  }
 
+  if (distance == "sq.euclidian") {
+    d <- dist(dataset, method = "euclidean") ^ 2
+  } else if (distance == "gower") {
+    d <- sapply(1:nrow(dataset), function(i) gower::gower_dist(dataset[i, ], dataset)) %>%
+      as.dist()
+  } else {
+    d <- dist(dataset, method = distance)
+  }
+  hc_out <- hclust(d = d, method = method)
   as.list(environment()) %>% add_class("hclus")
 }
 
@@ -84,6 +99,9 @@ summary.hclus <- function(object, ...) {
   cat("Distance    :", object$distance, "\n")
   cat("Standardize :", object$standardize, "\n")
   cat("Observations:", format_nr(length(object$hc_out$order), dec = 0), "\n")
+  if (sum(object$anyCategorical) > 0 && object$distance != "gower") {
+    cat("** When {factor} variables are included \"Gower\" distance is used **\n\n")
+  }
 }
 
 #' Plot method for the hclus function
@@ -164,10 +182,6 @@ plot.hclus <- function(
       xlab <- "When dendrogram is selected no other plots can be shown.\nCall the plot function separately in Report > Rmd to view different plot types."
     }
 
-    ## can't combine base graphics with grid graphics
-    ## https://cran.r-project.org/web/packages/gridExtra/vignettes/grid.arrange.html
-    ## ... unless you want to try gridBase https://cran.r-project.org/web/packages/gridBase/index.html
-
     ## trying out ggraph - looks great but dendrogram very slow for larger datasets
     # install.packages("ggraph")
     # library(ggraph)
@@ -176,26 +190,52 @@ plot.hclus <- function(
       # geom_edge_elbow()
 
     if (cutoff == 0) {
-      # plot(hc, labels = labels, main = "Dendrogram", xlab = xlab, ylab = "Within-cluster heterogeneity")
       plot(hc, main = "Dendrogram", xlab = xlab, ylab = "Within-cluster heterogeneity")
+      # plot_list[["dendro"]] <- patchwork::wrap_elements(~ plot(hc), clip = FALSE)
     } else {
       plot(
         hc, ylim = c(cutoff, 1), leaflab = "none",
         main = "Cutoff dendrogram", xlab = xlab, ylab = "Within-cluster heterogeneity"
       )
+      # plot_list[["dendro"]] <- patchwork::wrap_elements(~ plot(hc), clip = FALSE)
     }
     return(invisible())
   }
 
-  if (custom) {
-    if (length(plot_list) == 1) {
-      return(plot_list[[1]])
+  if (length(plot_list) > 0) {
+    if (custom) {
+      if (length(plot_list) == 1) plot_list[[1]] else plot_list
     } else {
-      return(plot_list)
+      patchwork::wrap_plots(plot_list, ncol = 1) %>%
+        {if (shiny) . else print(.)}
     }
   }
+}
 
-  sshhr(gridExtra::grid.arrange(grobs = plot_list, ncol = 1)) %>% {
-    if (shiny) . else print(.)
-  }
+#' Add a cluster membership variable to the active dataset
+#'
+#' @details See \url{https://radiant-rstats.github.io/docs/multivariate/hclus.html} for an example in Radiant
+#'
+#' @param dataset Dataset to append to cluster membership variable to
+#' @param object Return value from \code{\link{hclus}}
+#' @param nr_clus Number of clusters to extract
+#' @param name Name of cluster membership variable
+#' @param ... Additional arguments
+#'
+#' @examples
+#' hclus(shopping, vars = "v1:v6") %>%
+#'   store(shopping, ., nr_clus = 3) %>%
+#'   head()
+#' @seealso \code{\link{hclus}} to generate results
+#' @seealso \code{\link{summary.hclus}} to summarize results
+#' @seealso \code{\link{plot.hclus}} to plot results
+#'
+#' @export
+store.hclus <- function(dataset, object, nr_clus = 2, name = "", ...) {
+  if (is_empty(name)) name <- paste0("hclus", nr_clus)
+  indr <- indexr(dataset, object$vars, object$data_filter)
+  hm <- rep(NA, indr$nr)
+  hm[indr$ind] <- cutree(object$hc_out, nr_clus)
+  dataset[[name]] <- as.factor(hm)
+  dataset
 }

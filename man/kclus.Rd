@@ -4,16 +4,27 @@
 \alias{kclus}
 \title{K-clustering}
 \usage{
-kclus(dataset, vars, fun = "mean", hc_init = TRUE,
-  distance = "sq.euclidian", method = "ward.D", seed = 1234,
-  nr_clus = 2, standardize = TRUE, data_filter = "")
+kclus(
+  dataset,
+  vars,
+  fun = "kmeans",
+  hc_init = TRUE,
+  distance = "sq.euclidian",
+  method = "ward.D",
+  seed = 1234,
+  nr_clus = 2,
+  standardize = TRUE,
+  lambda = NULL,
+  data_filter = "",
+  envir = parent.frame()
+)
 }
 \arguments{
 \item{dataset}{Dataset}
 
 \item{vars}{Vector of variables to include in the analysis}
 
-\item{fun}{Function to use: "mean" or "median"}
+\item{fun}{Use either "kmeans" or "kproto" for clustering}
 
 \item{hc_init}{Use centers from hclus as the starting point}
 
@@ -27,7 +38,11 @@ kclus(dataset, vars, fun = "mean", hc_init = TRUE,
 
 \item{standardize}{Standardize data (TRUE or FALSE)}
 
+\item{lambda}{Parameter > 0 to trade off between Euclidean distance of numeric variables and simple matching coefficient between categorical variables. Also a vector of variable specific factors is possible where the order must correspond to the order of the variables in the data. In this case all variables' distances will be multiplied by their corresponding lambda value.}
+
 \item{data_filter}{Expression entered in, e.g., Data > View to filter the dataset in Radiant. The expression should be a string (e.g., "price > 10000")}
+
+\item{envir}{Environment to extract data from}
 }
 \value{
 A list of all variables used in kclus as an object of class kclus

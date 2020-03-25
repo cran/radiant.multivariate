@@ -4,8 +4,16 @@
 \alias{full_factor}
 \title{Factor analysis (PCA)}
 \usage{
-full_factor(dataset, vars, method = "PCA", nr_fact = 1,
-  rotation = "varimax", data_filter = "")
+full_factor(
+  dataset,
+  vars,
+  method = "PCA",
+  hcor = FALSE,
+  nr_fact = 1,
+  rotation = "varimax",
+  data_filter = "",
+  envir = parent.frame()
+)
 }
 \arguments{
 \item{dataset}{Dataset}
@@ -14,11 +22,15 @@ full_factor(dataset, vars, method = "PCA", nr_fact = 1,
 
 \item{method}{Factor extraction method to use}
 
+\item{hcor}{Use polycor::hetcor to calculate the correlation matrix}
+
 \item{nr_fact}{Number of factors to extract}
 
 \item{rotation}{Apply varimax rotation or no rotation ("varimax" or "none")}
 
 \item{data_filter}{Expression entered in, e.g., Data > View to filter the dataset in Radiant. The expression should be a string (e.g., "price > 10000")}
+
+\item{envir}{Environment to extract data from}
 }
 \value{
 A list with all variables defined in the function as an object of class full_factor

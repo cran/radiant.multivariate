@@ -7,7 +7,9 @@
 #' @param attr Names of numeric variables
 #' @param pref Names of numeric brand preference measures
 #' @param nr_dim Number of dimensions
+#' @param hcor Use polycor::hetcor to calculate the correlation matrix
 #' @param data_filter Expression entered in, e.g., Data > View to filter the dataset in Radiant. The expression should be a string (e.g., "price > 10000")
+#' @param envir Environment to extract data from
 #'
 #' @return A list of all variables defined in the function as an object of class prmap
 #'
@@ -18,20 +20,26 @@
 #' @seealso \code{\link{plot.prmap}} to plot results
 #'
 #' @importFrom psych principal
+#' @importFrom lubridate is.Date
+#' @importFrom polycor hetcor
 #'
 #' @export
-prmap <- function(dataset, brand, attr, pref = "", nr_dim = 2, data_filter = "") {
+prmap <- function(
+  dataset, brand, attr, pref = "", nr_dim = 2, hcor = FALSE,
+  data_filter = "", envir = parent.frame()
+) {
 
   nr_dim <- as.numeric(nr_dim)
   vars <- c(brand, attr)
   if (!is_empty(pref)) vars <- c(vars, pref)
   df_name <- if (is_string(dataset)) dataset else deparse(substitute(dataset))
-  dataset <- get_data(dataset, vars, filt = data_filter)
+  dataset <- get_data(dataset, vars, filt = data_filter, envir = envir)
 
   brands <- dataset[[brand]] %>%
     as.character() %>%
     gsub("^\\s+|\\s+$", "", .)
-  f_data <- get_data(dataset, attr)
+  f_data <- get_data(dataset, attr, envir = envir)
+  anyCategorical <- sapply(f_data, function(x) is.numeric(x) || is.Date(x)) == FALSE
   nrObs <- nrow(dataset)
 
   # in case : is used
@@ -41,8 +49,22 @@ prmap <- function(dataset, brand, attr, pref = "", nr_dim = 2, data_filter = "")
              add_class("prmap"))
   }
 
+  if (hcor) {
+    f_data <- mutate_if(f_data, is.Date, as.numeric)
+    cmat <- try(sshhr(polycor::hetcor(f_data, ML = FALSE, std.err = FALSE)$correlations), silent = TRUE)
+    f_data <- mutate_all(f_data, radiant.data::as_numeric)
+    if (inherits(cmat, "try-error")) {
+      message("Calculating the heterogeneous correlation matrix produced an error.\nUsing standard correlation matrix instead")
+      hcor <- "Calculation failed"
+      cmat <- cor(f_data)
+    }
+  } else {
+    f_data <- mutate_all(f_data, radiant.data::as_numeric)
+    cmat <- cor(f_data)
+  }
+
   fres <- sshhr(psych::principal(
-    cov(f_data), nfactors = nr_dim, rotate = "varimax",
+    cmat, nfactors = nr_dim, rotate = "varimax",
     scores = FALSE, oblique.scores = FALSE
   ))
 
@@ -61,14 +83,23 @@ prmap <- function(dataset, brand, attr, pref = "", nr_dim = 2, data_filter = "")
     select(-1)
 
   if (!is_empty(pref)) {
-    pref_cor <- get_data(dataset, pref) %>%
-      cor(fres$scores) %>%
-      data.frame(stringsAsFactors = FALSE)
+    p_data <- get_data(dataset, pref, envir = envir) %>%
+      mutate_if(is.Date, as.numeric)
+    anyPrefCat <- sapply(p_data, function(x) is.numeric(x)) == FALSE
+    if (sum(anyPrefCat) > 0) {
+      pref_cor <- sshhr(polycor::hetcor(cbind(p_data, fres$scores), ML = FALSE, std.err = FALSE)$correlations)
+      pref_cor <- as.data.frame(pref_cor[-((length(pref)+1):nrow(pref_cor)), -(1:length(pref))], stringsAsFactor = FALSE)
+    } else {
+      pref_cor <- p_data %>%
+        cor(fres$scores) %>%
+        data.frame(stringsAsFactors = FALSE)
+    }
     pref <- colnames(pref_cor)
     pref_cor$communalities <- rowSums(pref_cor ^ 2)
+    rm(p_data, anyPrefCat)
   }
 
-  rm(f_data, m, cscm)
+  rm(f_data, m, cscm, envir)
   as.list(environment()) %>% add_class(c("prmap", "full_factor"))
 }
 
@@ -107,11 +138,33 @@ summary.prmap <- function(object, cutoff = 0, dec = 2, ...) {
   if (!is_empty(object$pref)) {
     cat("Preferences :", paste0(object$pref, collapse = ", "), "\n")
   }
-  cat("Dimensions:", object$nr_dim, "\n")
+  cat("Dimensions  :", object$nr_dim, "\n")
   cat("Rotation    : varimax\n")
   cat("Observations:", object$nrObs, "\n")
+  if (is.character(object$hcor)) {
+    cat(paste0("Correlation : Pearson (adjustment using polycor::hetcor failed)\n"))
+  } else if (isTRUE(object$hcor)) {
+    if (sum(object$anyCategorical) > 0) {
+      cat(paste0("Correlation : Heterogeneous correlations using polycor::hetcor\n"))
+    } else {
+      cat(paste0("Correlation : Pearson\n"))
+    }
+  } else {
+    cat("Correlation : Pearson\n")
+  }
+  if (sum(object$anyCategorical) > 0) {
+    if (isTRUE(object$hcor)) {
+      cat("** Variables of type {factor} are assumed to be ordinal **\n\n")
+    } else {
+      cat("** Variables of type {factor} included without adjustment **\n\n")
+    }
+  } else if (isTRUE(object$hcor)) {
+    cat("** No variables of type {factor} selected. No adjustment applied **\n\n")
+  } else {
+    cat("\n")
+  }
 
-  cat("\nBrand - Factor scores:\n")
+  cat("Brand - Factor scores:\n")
   round(object$scores, dec) %>% print()
 
   cat("\nAttribute - Factor loadings:\n")
@@ -269,14 +322,12 @@ plot.prmap <- function(
     }
   }
 
-  if (custom) {
-    if (length(plot_list) == 1) {
-      return(plot_list[[1]])
+  if (length(plot_list) > 0) {
+    if (custom) {
+      if (length(plot_list) == 1) plot_list[[1]] else plot_list
     } else {
-      return(plot_list)
+      patchwork::wrap_plots(plot_list, ncol = 1) %>%
+        {if (shiny) . else print(.)}
     }
   }
-
-  sshhr(gridExtra::grid.arrange(grobs = plot_list, ncol = 1)) %>%
-    {if (shiny) . else print(.)}
 }

@@ -7,7 +7,9 @@
 #' @param method Factor extraction method to use
 #' @param nr_fact Number of factors to extract
 #' @param rotation Apply varimax rotation or no rotation ("varimax" or "none")
+#' @param hcor Use polycor::hetcor to calculate the correlation matrix
 #' @param data_filter Expression entered in, e.g., Data > View to filter the dataset in Radiant. The expression should be a string (e.g., "price > 10000")
+#' @param envir Environment to extract data from
 #'
 #' @return A list with all variables defined in the function as an object of class full_factor
 #'
@@ -17,28 +19,29 @@
 #' @seealso \code{\link{summary.full_factor}} to summarize results
 #' @seealso \code{\link{plot.full_factor}} to plot results
 #'
-#' @importFrom psych principal fa
+#' @importFrom psych principal fa factor.scores
 #' @importFrom GPArotation quartimax oblimin simplimax
+#' @importFrom polycor hetcor
+#' @importFrom psych scoreIrt
 #'
 #' @export
 full_factor <- function(
-  dataset, vars, method = "PCA", nr_fact = 1,
-  rotation = "varimax", data_filter = ""
+  dataset, vars, method = "PCA", hcor = FALSE, nr_fact = 1,
+  rotation = "varimax", data_filter = "",
+  envir = parent.frame()
 ) {
 
   df_name <- if (is_string(dataset)) dataset else deparse(substitute(dataset))
-  dataset <- get_data(dataset, vars, filt = data_filter)
+  dataset <- get_data(dataset, vars, filt = data_filter, envir = envir) %>%
+    mutate_if(is.Date, as.numeric)
+  rm(envir)
 
   ## in case : is used
   if (length(vars) < ncol(dataset))
     vars <- colnames(dataset)
 
+  anyCategorical <- sapply(dataset, function(x) is.numeric(x) || is.Date(x)) == FALSE
   nrObs <- nrow(dataset)
-  if (nrObs <= ncol(dataset)) {
-    return("Data should have more observations than variables.\nPlease reduce the number of variables." %>%
-      add_class("full_factor"))
-  }
-
   nrFac <- max(1, as.numeric(nr_fact))
   if (nrFac > ncol(dataset)) {
     return("The number of factors cannot exceed the number of variables" %>%
@@ -46,21 +49,76 @@ full_factor <- function(
     nrFac <- ncol(dataset)
   }
 
+  if (hcor) {
+    cmat <- try(sshhr(polycor::hetcor(dataset, ML = FALSE, std.err = FALSE)), silent = TRUE)
+    dataset <- mutate_all(dataset, radiant.data::as_numeric)
+    if (inherits(cmat, "try-error")) {
+      warning("Calculating the heterogeneous correlation matrix produced an error.\nUsing standard correlation matrix instead")
+      hcor <- "Calculation failed"
+      cmat <- cor(dataset)
+    } else {
+      cmat <- cmat$correlations
+    }
+
+  } else {
+    dataset <- mutate_all(dataset, radiant.data::as_numeric)
+    cmat <- cor(dataset)
+  }
+
   if (method == "PCA") {
     fres <- psych::principal(
-      dataset, nfactors = nrFac, rotate = rotation, scores = TRUE,
+      cmat, nfactors = nrFac, rotate = rotation, scores = FALSE,
       oblique.scores = FALSE
     )
+    m <- fres$loadings[, colnames(fres$loadings)]
+    cscm <- m %*% solve(crossprod(m))
+    fres$scores <- as.matrix(mutate_all(dataset, radiant.data::standardize)) %*% cscm
   } else {
-    fres <- try(psych::fa(
-      dataset, nfactors = nrFac, rotate = rotation, scores = TRUE,
-      oblique.scores = FALSE, fm = "ml"
-    ), silent = TRUE)
+    fres <- try(psych::fa(cmat, nfactors = nrFac, rotate = rotation, oblique.scores = FALSE, fm = "ml"), silent = TRUE)
     if (inherits(fres, "try-error")) {
       return(
         "An error occured. Increase the number of variables or reduce the number of factors" %>%
           add_class("full_factor")
       )
+    }
+    if (sum(anyCategorical) == ncol(dataset) && isTRUE(hcor)) {
+      ## necessary to deal with psych::irt.tau qnorm issue
+      isMaxMinOne <- sapply(dataset, function(x) (max(x, na.rm = TRUE) - min(x, na.rm = TRUE) == 1))
+      dataset <- mutate_if(dataset, isMaxMinOne, ~ (. - min(., na.rm = TRUE)) / (max(., na.rm = TRUE) - min(., na.rm = TRUE)))
+      .irt.tau <- function() {
+        tau <- psych::irt.tau(dataset)
+        m <- fres$loadings[, colnames(fres$loadings), drop = FALSE]
+        nf <- dim(m)[2]
+        max_dat <- max(dataset)
+        min_dat <- min(dataset)
+        if (any(tau == Inf)) {
+          tau[tau == Inf] <- max((max_dat - min_dat) * 5, 4)
+          warning("Tau values of Inf found. Adjustment applied")
+        }
+        if (any(tau == -Inf)) {
+          tau[tau == -Inf] <- min(-(max_dat - min_dat) * 5, -4)
+          warning("Tau values of -Inf found. Adjustment applied")
+        }
+        diffi <- list()
+        for (i in 1:nf) diffi[[i]] <- tau/sqrt(1 - m[, i]^2)
+        discrim <- m/sqrt(1 - m^2)
+        new.stats <- list(difficulty = diffi, discrimination = discrim)
+        psych::score.irt.poly(new.stats, dataset, cut = 0, bounds = c(-4, 4))
+      }
+      scores <- try(.irt.tau(), silent = TRUE)
+      # scores <- psych::scoreIrt(fres, dataset, cut = 0)
+      rm(.irt.tau)
+      if (inherits(scores, "try-error")) {
+        return(
+          paste0("An error occured estimating latent factor scores using psychIrt. The error message was:\n\n", attr(scores, 'condition')$message) %>% add_class("full_factor")
+        )
+      } else {
+        fres$scores <- apply(scores[,1:nrFac, drop=FALSE], 2, radiant.data::standardize)
+        rm(scores)
+        colnames(fres$scores) <- colnames(fres$loadings)
+      }
+    } else {
+      fres$scores <- psych::factor.scores(as.matrix(dataset), fres, method = "Thurstone")$scores
     }
   }
 
@@ -116,8 +174,37 @@ summary.full_factor <- function(
   cat("Method      :", object$method, "\n")
   cat("Rotation    :", object$rotation, "\n")
   cat("Observations:", format_nr(object$nrObs, dec = 0), "\n")
+  if (is.character(object$hcor)) {
+    cat(paste0("Correlation : Pearson (adjustment using polycor::hetcor failed)\n"))
+  } else if (isTRUE(object$hcor)) {
+    if (sum(object$anyCategorical) > 0) {
+      cat(paste0("Correlation : Heterogeneous correlations using polycor::hetcor\n"))
+    } else {
+      cat(paste0("Correlation : Pearson\n"))
+    }
+  } else {
+    cat("Correlation : Pearson\n")
+  }
+  if (sum(object$anyCategorical) > 0) {
+    if (isTRUE(object$hcor)) {
+      cat("** Variables of type {factor} are assumed to be ordinal **\n")
+      if (object$method == "PCA") {
+        cat("** Factor scores are biased when using PCA when one or more {factor} variables are included **\n\n")
+      } else if (sum(object$anyCategorical) == length(object$vars)) {
+        cat("** Factor scores calculated using psych::scoreIrt **\n\n")
+      } else if (sum(object$anyCategorical) < length(object$vars)) {
+        cat("** Factor scores are biased when a mix of {factor} and numeric variables are used **\n\n")
+      }
+    } else {
+      cat("** Variables of type {factor} included without adjustment **\n\n")
+    }
+  } else if (isTRUE(object$hcor)) {
+    cat("** No variables of type {factor} selected. No adjustment applied **\n\n")
+  } else {
+    cat("\n")
+  }
 
-  cat("\nFactor loadings:\n")
+  cat("Factor loadings:\n")
 
   ## show only the loadings > cutoff
   clean_loadings(object$floadings, cutoff = cutoff, fsort = fsort, dec = dec, repl = "") %>%
@@ -217,16 +304,14 @@ plot.full_factor <- function(x, plots = "attr", shiny = FALSE, custom = FALSE, .
     }
   }
 
-  if (custom) {
-    if (length(plot_list) == 1) {
-      return(plot_list[[1]])
+  if (length(plot_list) > 0) {
+    if (custom) {
+      if (length(plot_list) == 1) plot_list[[1]] else plot_list
     } else {
-      return(plot_list)
+      patchwork::wrap_plots(plot_list, ncol = min(length(plot_list), 2)) %>%
+        {if (shiny) . else print(.)}
     }
   }
-
-  sshhr(gridExtra::grid.arrange(grobs = plot_list, ncol = min(length(plot_list), 2))) %>%
-    {if (shiny) . else print(.)}
 }
 
 #' Store factor scores to active dataset
@@ -254,7 +339,7 @@ store.full_factor <- function(dataset, object, name = "", ...) {
   indr <- indexr(dataset, object$vars, object$data_filter)
   fs <- data.frame(matrix(NA, nrow = indr$nr, ncol = ncol(fscores)), stringsAsFactors = FALSE)
   fs[indr$ind, ] <- fscores
-  dataset[, paste0(name, 1:ncol(fscores))] <- fs
+  dataset[, sub("^[a-zA-Z]+([0-9]+)$", paste0(name, "\\1"), colnames(fscores))] <- fs
   dataset
 }
 

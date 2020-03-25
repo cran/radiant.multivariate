@@ -10,6 +10,7 @@
 #' @param nr_dim Number of dimensions
 #' @param seed Random seed
 #' @param data_filter Expression entered in, e.g., Data > View to filter the dataset in Radiant. The expression should be a string (e.g., "price > 10000")
+#' @param envir Environment to extract data from
 #'
 #' @return A list of all variables defined in the function as an object of class mds
 #'
@@ -25,17 +26,26 @@
 #' @export
 mds <- function(
   dataset, id1, id2, dis, method = "metric",
-  nr_dim = 2, seed = 1234, data_filter = ""
+  nr_dim = 2, seed = 1234, data_filter = "",
+  envir = parent.frame()
 ) {
 
   nr_dim <- as.numeric(nr_dim)
   df_name <- if (is_string(dataset)) dataset else deparse(substitute(dataset))
-  dataset <- get_data(dataset, c(id1, id2, dis), filt = data_filter)
+  dataset <- get_data(dataset, c(id1, id2, dis), filt = data_filter, envir = envir, na.rm = FALSE)
+
+  init_row <- nrow(dataset)
+  dataset <- na.omit(dataset)
+  nr_na <- init_row - nrow(dataset)
+  if (nr_na > 0) {
+    return(paste0("The map cannot be created because the provided data contains ", nr_na, " rows with\nmissing data. Please choose other ID variables or another dataset.\n\nFor an example dataset go to Data > Manage, select 'examples' from the\n'Load data of type' dropdown, and press the 'Load examples' button. Then\nselect the \'city' dataset.") %>%
+      add_class("mds"))
+  }
 
   d <- dataset[[dis]]
   id1_dat <- as.character(dataset[[id1]])
   id2_dat <- as.character(dataset[[id2]])
-  rm(dataset)
+  rm(dataset, envir)
 
   ## ids
   lab <- unique(c(id1_dat, id2_dat))
@@ -51,7 +61,7 @@ mds <- function(
   } else if ((lower + nrLev) == nrObs) {
     mds_dis_mat[lower.tri(mds_dis_mat, diag = TRUE)] <- d
   } else {
-    return("Number of observations and unique IDs for the brand variable do not match.\nPlease choose another brand variable or another dataset.\n\nFor an example dataset go to Data > Manage, select 'examples' from the\n'Load data of type' dropdown, and press the 'Load examples' button. Then\nselect the \'city' dataset." %>%
+    return("Number of observations and unique IDs for the brand variable do not match.\nPlease choose other ID variables or another dataset.\n\nFor an example dataset go to Data > Manage, select 'examples' from the\n'Load data of type' dropdown, and press the 'Load examples' button. Then\nselect the \'city' dataset." %>%
       add_class("mds"))
   }
 
@@ -186,14 +196,12 @@ plot.mds <- function(x, rev_dim = NULL, fontsz = 5, shiny = FALSE, custom = FALS
     }
   }
 
-  if (custom) {
-    if (length(plot_list) == 1) {
-      return(plot_list[[1]])
+  if (length(plot_list) > 0) {
+    if (custom) {
+      if (length(plot_list) == 1) plot_list[[1]] else plot_list
     } else {
-      return(plot_list)
+      patchwork::wrap_plots(plot_list, ncol = 1) %>%
+        {if (shiny) . else print(.)}
     }
   }
-
-  sshhr(gridExtra::grid.arrange(grobs = plot_list, ncol = 1)) %>%
-  {if (shiny) . else print(.)}
 }
