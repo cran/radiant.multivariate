@@ -36,7 +36,7 @@ conjoint <- function(
 
   ## in case : was used to select a range of variables
   # evar <- colnames(dataset)[-1]
-  if (!is_empty(by, "none")) {
+  if (!radiant.data::is_empty(by, "none")) {
     evar <- base::setdiff(evar, by)
     vars <- base::setdiff(vars, by)
     bylevs <- dataset[[by]] %>%
@@ -63,7 +63,7 @@ conjoint <- function(
     }
 
     model <- sshhr(lm(formula, data = cdat))
-    coeff <- tidy(model) %>% as.data.frame()
+    coeff <- tidy(model) %>% na.omit() %>% as.data.frame()
     tab <- the_table(coeff, cdat, evar)
 
     coeff$sig_star <- sig_stars(coeff$p.value) %>%
@@ -81,7 +81,7 @@ conjoint <- function(
   }
 
   ## creating PW and IW data.frames
-  if (!is_empty(by, "none")) {
+  if (!radiant.data::is_empty(by, "none")) {
     cn <- gsub("\\|", "_", model_list[[1]]$coeff$label) %>%
       gsub("[^A-z0-9_\\.]", "", .)
 
@@ -144,7 +144,7 @@ summary.conjoint <- function(
 
   cat("Conjoint analysis\n")
   cat("Data                 :", object$df_name, "\n")
-  if (!is_empty(object$data_filter)) {
+  if (!radiant.data::is_empty(object$data_filter)) {
     cat("Filter               :", gsub("\\n", "", object$data_filter), "\n")
   }
   if (object$by != "none") {
@@ -154,7 +154,7 @@ summary.conjoint <- function(
   cat("Response variable    :", rvar, "\n")
   cat("Explanatory variables:", paste0(object$evar, collapse = ", "), "\n\n")
 
-  if (object$by == "none" || is_empty(show) || !show %in% names(object$model_list)) {
+  if (object$by == "none" || radiant.data::is_empty(show) || !show %in% names(object$model_list)) {
     show <- names(object$model_list)[1]
   }
 
@@ -296,7 +296,7 @@ predict.conjoint <- function(
     pred_val
   }
 
-  if (is_empty(object$by, "none")) {
+  if (radiant.data::is_empty(object$by, "none")) {
     object$model <- object$model_list[["full"]]$model
     predict_model(object, pfun, "conjoint.predict", pred_data, pred_cmd, conf_lev, se, dec, envir = envir) %>%
       set_attr("radiant_interval", interval) %>%
@@ -386,7 +386,7 @@ print.conjoint.predict <- function(x, ..., n = 20)
 #' @param show Level in by variable to analyze (e.g., a specific respondent)
 #' @param scale_plot Scale the axes of the part-worth plots to the same range
 #' @param shiny Did the function call originate inside a shiny app
-#' @param custom Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This option can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{http://docs.ggplot2.org} for options.
+#' @param custom Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This option can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{https://ggplot2.tidyverse.org/} for options.
 #' @param ... further arguments passed to or from other methods
 #'
 #' @examples
@@ -403,7 +403,7 @@ plot.conjoint <- function(
   shiny = FALSE, custom = FALSE, ...
 ) {
 
-  if (x$by == "none" || is_empty(show) || !show %in% names(x$model_list)) {
+  if (x$by == "none" || radiant.data::is_empty(show) || !show %in% names(x$model_list)) {
     show <- names(x$model_list)[1]
   }
 

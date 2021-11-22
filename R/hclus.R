@@ -91,7 +91,7 @@ summary.hclus <- function(object, ...) {
 
   cat("Hierarchical cluster analysis\n")
   cat("Data        :", object$df_name, "\n")
-  if (!is_empty(object$data_filter)) {
+  if (!radiant.data::is_empty(object$data_filter)) {
     cat("Filter      :", gsub("\\n", "", object$data_filter), "\n")
   }
   cat("Variables   :", paste0(object$vars, collapse = ", "), "\n")
@@ -112,7 +112,7 @@ summary.hclus <- function(object, ...) {
 #' @param plots Plots to return. "change" shows the percentage change in within-cluster heterogeneity as respondents are grouped into different number of clusters, "dendro" shows the dendrogram, "scree" shows a scree plot of within-cluster heterogeneity
 #' @param cutoff For large datasets plots can take time to render and become hard to interpret. By selection a cutoff point (e.g., 0.05 percent) the initial steps in hierarchical cluster analysis are removed from the plot
 #' @param shiny Did the function call originate inside a shiny app
-#' @param custom Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This option can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{http://docs.ggplot2.org} for options.
+#' @param custom Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This option can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{https://ggplot2.tidyverse.org/} for options.
 #' @param ... further arguments passed to or from other methods
 #'
 #' @examples
@@ -130,7 +130,7 @@ plot.hclus <- function(
   shiny = FALSE, custom = FALSE, ...
 ) {
 
-  if (is_empty(plots)) return(invisible())
+  if (radiant.data::is_empty(plots)) return(invisible())
   if (is.character(x)) return(invisible())
   if (is_not(cutoff)) cutoff <- 0
   x$hc_out$height %<>% {. / max(.)}
@@ -232,7 +232,7 @@ plot.hclus <- function(
 #'
 #' @export
 store.hclus <- function(dataset, object, nr_clus = 2, name = "", ...) {
-  if (is_empty(name)) name <- paste0("hclus", nr_clus)
+  if (radiant.data::is_empty(name)) name <- paste0("hclus", nr_clus)
   indr <- indexr(dataset, object$vars, object$data_filter)
   hm <- rep(NA, indr$nr)
   hm[indr$ind] <- cutree(object$hc_out, nr_clus)

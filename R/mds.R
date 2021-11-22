@@ -73,7 +73,7 @@ mds <- function(
   # res <- suppressWarnings(metaMDS(mds_dis_mat, k = nr_dim, trymax = 500))
   # if (res$converged == FALSE) return("The MDS algorithm did not converge. Please try again.")
 
-  seed %>% gsub("[^0-9]", "", .) %>% {if (!is_empty(.)) set.seed(seed)}
+  seed %>% gsub("[^0-9]", "", .) %>% {if (!radiant.data::is_empty(.)) set.seed(seed)}
   res <- MASS::isoMDS(mds_dis_mat, k = nr_dim, trace = FALSE)
   res$stress <- res$stress / 100
 
@@ -111,7 +111,7 @@ summary.mds <- function(object, dec = 2, ...) {
 
   cat("(Dis)similarity based brand map (MDS)\n")
   cat("Data        :", object$df_name, "\n")
-  if (!is_empty(object$data_filter)) {
+  if (!radiant.data::is_empty(object$data_filter)) {
     cat("Filter      :", gsub("\\n", "", object$data_filter), "\n")
   }
   cat("Variables   :", paste0(c(object$id1, object$id2, object$dis), collapse = ", "), "\n")
@@ -145,7 +145,7 @@ summary.mds <- function(object, dec = 2, ...) {
 #' @param rev_dim Flip the axes in plots
 #' @param fontsz Font size to use in plots
 #' @param shiny Did the function call originate inside a shiny app
-#' @param custom Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This option can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{http://docs.ggplot2.org} for options.
+#' @param custom Logical (TRUE, FALSE) to indicate if ggplot object (or list of ggplot objects) should be returned. This option can be used to customize plots (e.g., add a title, change x and y labels, etc.). See examples and \url{https://ggplot2.tidyverse.org/} for options.
 #' @param ... further arguments passed to or from other methods
 #'
 #' @examples
@@ -172,7 +172,7 @@ plot.mds <- function(x, rev_dim = NULL, fontsz = 5, shiny = FALSE, custom = FALS
     set_colnames(paste0("dim", seq_len(ncol(.))))
   tbl$rnames <- rownames(tbl)
   ## reverse selected dimensions
-  if (!is_empty(rev_dim)) {
+  if (!radiant.data::is_empty(rev_dim)) {
     rev_dim <- as.integer(rev_dim)
     tbl[, rev_dim] <- -1 * tbl[, rev_dim]
   }
