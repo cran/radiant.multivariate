@@ -2,13 +2,13 @@ Package: radiant.multivariate
 Type: Package
 Title: Multivariate Menu for Radiant: Business Analytics using R and
         Shiny
-Version: 1.4.1
-Date: 2021-11-21
+Version: 1.4.4
+Date: 2022-7-22
 Authors@R: person("Vincent", "Nijs", , "radiant@rady.ucsd.edu", c("aut", "cre"))
 Description: The Radiant Multivariate menu includes interfaces for perceptual
     mapping, factor analysis, cluster analysis, and conjoint analysis. The
     application extends the functionality in 'radiant.data'.
-Depends: R (>= 3.4.0), radiant.data (>= 1.4.1)
+Depends: R (>= 3.4.0), radiant.data (>= 1.4.4)
 Imports: radiant.model (>= 1.4.1), shiny (>= 1.7.1), dplyr (>= 1.0.7),
         rlang (>= 0.4.10), ggplot2 (>= 2.2.1), scales (>= 0.4.0),
         magrittr (>= 1.5), psych (>= 1.8.4), GPArotation (>=
@@ -23,10 +23,10 @@ BugReports: https://github.com/radiant-rstats/radiant.multivariate/issues/
 License: AGPL-3 | file LICENSE
 LazyData: true
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 NeedsCompilation: no
-Packaged: 2021-11-22 05:17:20 UTC; jovyan
+Packaged: 2022-07-23 00:39:14 UTC; vnijs
 Author: Vincent Nijs [aut, cre]
 Maintainer: Vincent Nijs <radiant@rady.ucsd.edu>
 Repository: CRAN
-Date/Publication: 2021-11-22 05:50:02 UTC
+Date/Publication: 2022-07-23 06:20:02 UTC

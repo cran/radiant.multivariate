@@ -12,8 +12,9 @@ pf_inputs <- reactive({
   pf_args$data_filter <- if (input$show_filter) input$data_filter else ""
   pf_args$dataset <- input$dataset
   ## loop needed because reactive values don't allow single bracket indexing
-  for (i in r_drop(names(pf_args)))
+  for (i in r_drop(names(pf_args))) {
     pf_args[[i]] <- input[[paste0("pf_", i)]]
+  }
   pf_args
 })
 
@@ -37,7 +38,7 @@ output$ui_pre_factor <- renderUI({
     conditionalPanel(
       condition = "input.tabs_pre_factor == 'Summary'",
       wellPanel(
-        actionButton("pf_run", "Estimate model", width = "100%", icon = icon("play"), class = "btn-success")
+        actionButton("pf_run", "Estimate model", width = "100%", icon = icon("play", verify_fa = FALSE), class = "btn-success")
       )
     ),
     wellPanel(
@@ -49,7 +50,8 @@ output$ui_pre_factor <- renderUI({
       conditionalPanel(
         condition = "input.tabs_pre_factor == 'Plot'",
         selectizeInput(
-          "pf_plots", label = "Plot(s):", choices = pf_plots,
+          "pf_plots",
+          label = "Plot(s):", choices = pf_plots,
           selected = state_multiple("pf_plots", pf_plots, c("scree", "change")),
           multiple = TRUE,
           options = list(
@@ -73,11 +75,19 @@ pf_plot <- eventReactive(input$pf_plots, {
   list(plot_width = 600, plot_height = length(input$pf_plots) * 400)
 })
 
-pf_plot_width <- function()
-  pf_plot() %>% {if (is.list(.)) .$plot_width else 600}
+pf_plot_width <- function() {
+  pf_plot() %>%
+    {
+      if (is.list(.)) .$plot_width else 600
+    }
+}
 
-pf_plot_height <- function()
-  pf_plot() %>% {if (is.list(.)) .$plot_height else 400}
+pf_plot_height <- function() {
+  pf_plot() %>%
+    {
+      if (is.list(.)) .$plot_height else 400
+    }
+}
 
 output$pre_factor <- renderUI({
   register_print_output("summary_pre_factor", ".summary_pre_factor")
@@ -115,7 +125,9 @@ output$pre_factor <- renderUI({
 })
 
 .summary_pre_factor <- reactive({
-  if (not_pressed(input$pf_run)) return("** Press the Estimate button to generate factor analysis diagnostics **")
+  if (not_pressed(input$pf_run)) {
+    return("** Press the Estimate button to generate factor analysis diagnostics **")
+  }
   isolate({
     if (not_available(input$pf_vars)) {
       return("This analysis requires multiple variables of type numeric or integer.\nIf these variables are not available please select another dataset.\n\n" %>% suggest_data("toothpaste"))
@@ -129,7 +141,7 @@ output$pre_factor <- renderUI({
 .plot_pre_factor <- eventReactive(c(input$pf_run, input$pf_plots), {
   if (not_available(input$pf_vars)) {
     "This analysis requires multiple variables of type numeric or integer.\nIf these variables are not available please select another dataset.\n\n" %>%
-        suggest_data("toothpaste")
+      suggest_data("toothpaste")
   } else if (length(input$pf_vars) < 2) {
     "Please select two or more numeric variables\nin the Summary tab and re-estimate the model"
   } else {
@@ -139,7 +151,7 @@ output$pre_factor <- renderUI({
   }
 })
 
-observeEvent(input$pre_factor_report, {
+pre_factor_report <- function() {
   inp_out <- list(list(dec = 2), "")
   if (length(input$pf_plots) > 0) {
     figs <- TRUE
@@ -158,7 +170,7 @@ observeEvent(input$pre_factor_report, {
     fig.width = pf_plot_width(),
     fig.height = pf_plot_height()
   )
-})
+}
 
 download_handler(
   id = "dlp_pre_factor",
@@ -170,3 +182,18 @@ download_handler(
   width = pf_plot_width,
   height = pf_plot_height
 )
+
+observeEvent(input$pre_factor_report, {
+  r_info[["latest_screenshot"]] <- NULL
+  pre_factor_report()
+})
+
+observeEvent(input$pre_factor_screenshot, {
+  r_info[["latest_screenshot"]] <- NULL
+  radiant_screenshot_modal("modal_pre_factor_screenshot")
+})
+
+observeEvent(input$modal_pre_factor_screenshot, {
+  pre_factor_report()
+  removeModal() ## remove shiny modal after save
+})
