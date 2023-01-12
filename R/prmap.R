@@ -24,14 +24,11 @@
 #' @importFrom polycor hetcor
 #'
 #' @export
-prmap <- function(
-  dataset, brand, attr, pref = "", nr_dim = 2, hcor = FALSE,
-  data_filter = "", envir = parent.frame()
-) {
-
+prmap <- function(dataset, brand, attr, pref = "", nr_dim = 2, hcor = FALSE,
+                  data_filter = "", envir = parent.frame()) {
   nr_dim <- as.numeric(nr_dim)
   vars <- c(brand, attr)
-  if (!radiant.data::is_empty(pref)) vars <- c(vars, pref)
+  if (!is.empty(pref)) vars <- c(vars, pref)
   df_name <- if (is_string(dataset)) dataset else deparse(substitute(dataset))
   dataset <- get_data(dataset, vars, filt = data_filter, envir = envir)
 
@@ -46,7 +43,7 @@ prmap <- function(
   if (length(attr) < ncol(f_data)) attr <- colnames(f_data)
   if (nr_dim > length(attr)) {
     return("The number of dimensions cannot exceed the number of attributes" %>%
-             add_class("prmap"))
+      add_class("prmap"))
   }
 
   if (hcor) {
@@ -64,7 +61,8 @@ prmap <- function(
   }
 
   fres <- sshhr(psych::principal(
-    cmat, nfactors = nr_dim, rotate = "varimax",
+    cmat,
+    nfactors = nr_dim, rotate = "varimax",
     scores = FALSE, oblique.scores = FALSE
   ))
 
@@ -82,20 +80,20 @@ prmap <- function(
     set_rownames(.[["brands"]]) %>%
     select(-1)
 
-  if (!radiant.data::is_empty(pref)) {
+  if (!is.empty(pref)) {
     p_data <- get_data(dataset, pref, envir = envir) %>%
       mutate_if(is.Date, as.numeric)
     anyPrefCat <- sapply(p_data, function(x) is.numeric(x)) == FALSE
     if (sum(anyPrefCat) > 0) {
       pref_cor <- sshhr(polycor::hetcor(cbind(p_data, fres$scores), ML = FALSE, std.err = FALSE)$correlations)
-      pref_cor <- as.data.frame(pref_cor[-((length(pref)+1):nrow(pref_cor)), -(1:length(pref))], stringsAsFactor = FALSE)
+      pref_cor <- as.data.frame(pref_cor[-((length(pref) + 1):nrow(pref_cor)), -(1:length(pref))], stringsAsFactor = FALSE)
     } else {
       pref_cor <- p_data %>%
         cor(fres$scores) %>%
         data.frame(stringsAsFactors = FALSE)
     }
     pref <- colnames(pref_cor)
-    pref_cor$communalities <- rowSums(pref_cor ^ 2)
+    pref_cor$communalities <- rowSums(pref_cor^2)
     rm(p_data, anyPrefCat)
   }
 
@@ -117,8 +115,9 @@ prmap <- function(
 #' summary(result)
 #' summary(result, cutoff = .3)
 #' prmap(
-#'   computer, brand = "brand", attr = "high_end:dated",
-#'   pref = c("innovative","business")
+#'   computer,
+#'   brand = "brand", attr = "high_end:dated",
+#'   pref = c("innovative", "business")
 #' ) %>% summary()
 #'
 #' @seealso \code{\link{prmap}} to calculate results
@@ -126,16 +125,17 @@ prmap <- function(
 #'
 #' @export
 summary.prmap <- function(object, cutoff = 0, dec = 2, ...) {
-
-  if (is.character(object)) return(object)
+  if (is.character(object)) {
+    return(object)
+  }
 
   cat("Attribute based brand map\n")
   cat("Data        :", object$df_name, "\n")
-  if (!radiant.data::is_empty(object$data_filter)) {
+  if (!is.empty(object$data_filter)) {
     cat("Filter      :", gsub("\\n", "", object$data_filter), "\n")
   }
   cat("Attributes  :", paste0(object$attr, collapse = ", "), "\n")
-  if (!radiant.data::is_empty(object$pref)) {
+  if (!is.empty(object$pref)) {
     cat("Preferences :", paste0(object$pref, collapse = ", "), "\n")
   }
   cat("Dimensions  :", object$nr_dim, "\n")
@@ -183,15 +183,15 @@ summary.prmap <- function(object, cutoff = 0, dec = 2, ...) {
   print_lds[ind] <- ""
   print(print_lds)
 
-  if (!radiant.data::is_empty(object$pref)) {
+  if (!is.empty(object$pref)) {
     cat("\nPreference correlations:\n")
     print(round(object$pref_cor, dec), digits = dec)
   }
 
   ## fit measures
   cat("\nFit measures:\n")
-  colSums(lds ^ 2) %>%
-    rbind(., . / length(dn[[1]])) %>%
+  colSums(lds^2) %>%
+    rbind(., 100 * (. / length(dn[[1]]))) %>%
     rbind(., cumsum(.[2, ])) %>%
     round(dec) %>%
     set_rownames(c("Eigenvalues", "Variance %", "Cumulative %")) %>%
@@ -223,7 +223,8 @@ summary.prmap <- function(object, cutoff = 0, dec = 2, ...) {
 #' plot(result, plots = c("brand", "attr"))
 #' plot(result, scaling = 1, plots = c("brand", "attr"))
 #' prmap(
-#'   retailers, brand = "retailer",
+#'   retailers,
+#'   brand = "retailer",
 #'   attr = "good_value:cluttered",
 #'   pref = c("segment1", "segment2")
 #' ) %>% plot(plots = c("brand", "attr", "pref"))
@@ -232,14 +233,14 @@ summary.prmap <- function(object, cutoff = 0, dec = 2, ...) {
 #' @seealso \code{\link{summary.prmap}} to plot results
 #'
 #' @importFrom ggrepel geom_text_repel
+#' @importFrom rlang .data
 #'
 #' @export
-plot.prmap <- function(
-  x, plots = "", scaling = 2, fontsz = 5, seed = 1234,
-  shiny = FALSE, custom = FALSE, ...
-) {
-
-  if (is.character(x)) return(x)
+plot.prmap <- function(x, plots = "", scaling = 2, fontsz = 5, seed = 1234,
+                       shiny = FALSE, custom = FALSE, ...) {
+  if (is.character(x)) {
+    return(x)
+  }
 
   ## set seed for ggrepel label positioning
   set.seed(seed)
@@ -254,11 +255,11 @@ plot.prmap <- function(
     mutate(rnames = rownames(.), type = "brand")
 
   ## preference coordinates
-  if (!radiant.data::is_empty(x$pref_cor)) {
+  if (!is.empty(x$pref_cor)) {
     pm_dat$pref <- x$pref_cor %>%
       select(-ncol(.)) %>%
       set_colnames(paste0("dim", seq_len(ncol(.)))) %>%
-      {. * scaling} %>%
+      (function(x) x * scaling) %>%
       mutate(rnames = rownames(.), type = "pref")
   } else {
     plots <- base::setdiff(plots, "pref")
@@ -267,11 +268,12 @@ plot.prmap <- function(
   ## attribute coordinates
   std_m <- x$fres$loadings
   dn <- dimnames(std_m)
-  pm_dat$attr <- std_m %>% matrix(nrow = length(dn[[1]])) %>%
+  pm_dat$attr <- std_m %>%
+    matrix(nrow = length(dn[[1]])) %>%
     set_colnames(paste0("dim", seq_len(ncol(.)))) %>%
     set_rownames(dn[[1]]) %>%
     data.frame(stringsAsFactors = FALSE) %>%
-    {. * scaling} %>%
+    (function(x) x * scaling) %>%
     mutate(rnames = rownames(.), type = "attr")
 
   ## combining data
@@ -290,31 +292,31 @@ plot.prmap <- function(
       p <- ggplot() +
         theme(legend.position = "none") +
         coord_cartesian(xlim = c(-lim, lim), ylim = c(-lim, lim)) +
-        geom_vline(xintercept = 0, size = 0.3) +
-        geom_hline(yintercept = 0, size = 0.3) +
+        geom_vline(xintercept = 0, linewidth = 0.3) +
+        geom_hline(yintercept = 0, linewidth = 0.3) +
         labs(
           x = paste("Dimension", i),
           y = paste("Dimension", j)
         )
 
-      if (!radiant.data::is_empty(plots)) {
+      if (!is.empty(plots)) {
         p <- p + ggrepel::geom_text_repel(
-          data = filter(pm_dat, !! as.symbol("type") %in% plots),
-          aes_string(x = i_name, y = j_name, label = "rnames", color = "type"),
+          data = filter(pm_dat, !!as.symbol("type") %in% plots),
+          aes(x = .data[[i_name]], y = .data[[j_name]], label = .data$rnames, color = .data$type),
           size = fontsz
         ) +
           scale_color_manual(values = label_colors)
 
         if ("brand" %in% plots) {
-          p <- p + geom_point(data = filter(pm_dat, !! as.symbol("type") == "brand"), aes_string(x = i_name, y = j_name))
+          p <- p + geom_point(data = filter(pm_dat, !!as.symbol("type") == "brand"), aes(x = .data[[i_name]], y = .data[[j_name]]))
         }
 
         if (any(c("attr", "pref") %in% plots)) {
-          pm_arrows <- filter(pm_dat, !! as.symbol("type") %in% base::setdiff(plots, "brand"))
+          pm_arrows <- filter(pm_dat, !!as.symbol("type") %in% base::setdiff(plots, "brand"))
           pm_arrows[, isNum] <- pm_arrows[, isNum] * 0.9
           p <- p + geom_segment(
-            data = pm_arrows, aes_string(x = 0, y = 0, xend = i_name, yend = j_name, color = "type"),
-            arrow = arrow(length = unit(0.01, "npc"), type = "closed"), size = 0.3, linetype = "dashed"
+            data = pm_arrows, aes(x = 0, y = 0, xend = .data[[i_name]], yend = .data[[j_name]], color = .data$type),
+            arrow = arrow(length = unit(0.01, "npc"), type = "closed"), linewidth = 0.3, linetype = "dashed"
           )
         }
       }
@@ -327,7 +329,7 @@ plot.prmap <- function(
       if (length(plot_list) == 1) plot_list[[1]] else plot_list
     } else {
       patchwork::wrap_plots(plot_list, ncol = 1) %>%
-        {if (shiny) . else print(.)}
+        (function(x) if (shiny) x else print(x))
     }
   }
 }
