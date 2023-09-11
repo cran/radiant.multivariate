@@ -1,9 +1,9 @@
 c17e0035c8c219ca2e38a0b6790c1fd3 *COPYING
-4a54b722cb7716bfd6844de2e62446fc *DESCRIPTION
+0bc42d203f212b767f1e1da7fba6021b *DESCRIPTION
 d483e638773ba49ce88e337cc8757475 *LICENSE
 4107abdc2b9d73ab3f66616467fe7c37 *NAMESPACE
-199f2aa38018d69558962ed69de69bb6 *NEWS.md
-625d4baa9422124be60c697d058d3eae *R/aaa.R
+774fb5ae4d525c96e91951ae9abba830 *NEWS.md
+108371e80a1fa96d096b5e82f19ddce0 *R/aaa.R
 c6c83dd183931004a19266629c62e2fb *R/conjoint.R
 35b10ed489b7eb3775e08a49cc6bca97 *R/full_factor.R
 fa379f1b68d0cac810665d18fc6c1315 *R/hclus.R
@@ -12,7 +12,7 @@ fa379f1b68d0cac810665d18fc6c1315 *R/hclus.R
 e0c56e64c3e16b022a0c7bc6694733fc *R/pre_factor.R
 86944dbaa8f76ca9a3e285a09b43b0c0 *R/prmap.R
 d9dec23409f80e6536bba5be13af0a05 *R/radiant.R
-127e166ec51bdd24318be76a97a050eb *README.md
+a2a81f542832a1fb2c2d90a76796ffc2 *README.md
 16d3b99e5004b5c3a4bd906e1c4e04ad *data/carpet.rda
 c83d750f0ace2c1e64370cbe6f8efb56 *data/city.rda
 c63b6cbd255ce68ba07b9ff9e374c933 *data/city2.rda
@@ -70,7 +70,7 @@ d7e2b23a3dd5f5242c2a58d64f97fa26 *inst/app/tools/help/figures/prmap_plot_all.png
 2362ed74f6d6d2e79650110d1f2c401b *inst/app/tools/help/mds.md
 297b31100a5523a7f8f4b40c4a9737b2 *inst/app/tools/help/pre_factor.md
 50ebd945d27a5852548de8b57b9d7efd *inst/app/tools/help/prmap.md
-72b7f2e37994db189d962261a71bda41 *inst/app/ui.R
+efc8faf4480afc8c226eeb37912cd7f3 *inst/app/ui.R
 8995ceebd65597c87dbd818e3cba8424 *inst/app/www/js/store.js
 5fe29947430708006deea03e49ebc89a *man/carpet.Rd
 a17e57eceeef057e946cb5b7bf0a86d2 *man/city.Rd
@@ -96,7 +96,7 @@ c48b98be84923752e80ea2291093cdf6 *man/plot.mds.Rd
 455030c0ce20e831845134e7cace60d4 *man/predict_conjoint_by.Rd
 8e4f5f0b608f290ec8ed6a9d3d21305e *man/print.conjoint.predict.Rd
 74c63e6e7bcc9c4ac7d63d87fb8fe649 *man/prmap.Rd
-8190490cf660e5ce36e918c2c2dfe3a8 *man/radiant.multivariate.Rd
+fa27b1843d2441ec921921bbd453dbe1 *man/radiant.multivariate.Rd
 6768024b8610d08e4ea652507002c68d *man/radiant.multivariate_viewer.Rd
 854289b2b56c4be42a056696ad365c60 *man/radiant.multivariate_window.Rd
 a891e92d28101dd24e2feb5323533872 *man/retailers.Rd
