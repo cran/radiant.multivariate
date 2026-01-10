@@ -77,7 +77,7 @@ mds <- function(dataset, id1, id2, dis, method = "metric",
   seed %>%
     gsub("[^0-9]", "", .) %>%
     (function(x) if (!is.empty(x)) set.seed(seed))
-  res <- MASS::isoMDS(mds_dis_mat, k = nr_dim, trace = FALSE)
+  res <- MASS::isoMDS(mds_dis_mat, k = nr_dim, trace = FALSE, tol=1e-6)
   res$stress <- res$stress / 100
 
   if (method == "metric") {
