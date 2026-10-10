@@ -1,3 +1,8 @@
+# radiant.multivariate 1.6.9
+
+* Pass a `data.frame` to `polycor::hetcor` in `prmap`, `pre_factor`, and `full_factor`. Tibbles are not accepted by polycor 0.8.2 and would cause an error in perceptual mapping and factor analysis
+* Removed the sections in README.md that described running Radiant online, on shinyapps.io, on shiny-server, and in the cloud. This also resolves the redirecting URLs that were flagged by CRAN
+
 # radiant.multivariate 1.6.7
 
 * Fixed labeling bug in mds function

@@ -15,10 +15,10 @@ test_that("City MDS points", {
     1464.04701004452, 522.48712860043, -462.400598146569, -306.546900234988,
     -136.432035420421, 1013.62838366558, -174.603164807742, -639.307768963489,
     131.685862779591, 560.580459896188, 13.3957612318459
-  ), .Dim = c(
+  ), dim = c(
     9L,
     2L
-  ), .Dimnames = list(c(
+  ), dimnames = list(c(
     "Boston", "NY", "DC", "Miami", "Chicago",
     "Seattle", "SF", "LA", "Denver"
   ), NULL))
@@ -34,10 +34,10 @@ test_that("Computer perceptual map", {
     1.2990975042645, -0.318156927318684, -1.18661978839803,
     -0.522421680770708, 0.728100892222923, 0.0936804393886441, -0.208948184854464,
     -0.934302935231416, 1.64813821225715, -0.598567531559918
-  ), .Dim = c(
+  ), dim = c(
     5L,
     2L
-  ), .Dimnames = list(c("Apple", "Dell", "Gateway", "HP", "Sony"), c("RC1", "RC2")))
+  ), dimnames = list(c("Apple", "Dell", "Gateway", "HP", "Sony"), c("RC1", "RC2")))
   expect_equal(res1, res2)
 })
 
@@ -48,7 +48,7 @@ test_that("Pre nalysis for diamonds", {
   # str(result)
   res1 <- result$pre_r2
   # dput(result$pre_r2)
-  res2 <- structure(list(Rsq = c(0.861258211951766, 0.86356619173057, 0.0450708598611924)), .Names = "Rsq", row.names = c("price", "carat", "table"), class = "data.frame")
+  res2 <- structure(list(Rsq = c(0.861258211951766, 0.86356619173057, 0.0450708598611924)), names = "Rsq", row.names = c("price", "carat", "table"), class = "data.frame")
   expect_equal(res1, res2)
 })
 
@@ -60,7 +60,7 @@ test_that("Factor/PCA analysis for diamonds", {
   res2 <- structure(list(PC1 = c(
     0.964483176117948, 0.972902482025944,
     0.325710945731448
-  )), .Names = "PC1", row.names = c(
+  )), names = "PC1", row.names = c(
     "price", "carat",
     "table"
   ), class = "data.frame")
@@ -98,7 +98,7 @@ test_that("K-clustering", {
   ), v5 = c(1.875, 4.5), v6 = c(3.875, 4.66666666666667)), class = "data.frame", row.names = c(
     "Cluster 1",
     "Cluster 2"
-  ), .Names = c("v1", "v2", "v3", "v4", "v5", "v6"))
+  ), names = c("v1", "v2", "v3", "v4", "v5", "v6"))
   expect_equal(res1, res2)
 })
 
